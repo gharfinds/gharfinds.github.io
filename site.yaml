@@ -1,16 +1,12 @@
-# Brand settings for the catalog pages. Keep names/colours in step with jugaad-house/config/accounts.yaml.
-title_suffix: Finds
+# One shared catalog for both Instagram accounts (Lakshay, 18 Nov): Jugaad House and Handy House link here.
+# Product numbers are global: a product keeps its number on both accounts.
+title_suffix: ""
 # preview: true lists products that have no affiliate link yet (plain Meesho link). Set false at launch.
 preview: true
 image_base: https://images.meesho.com/images/products
 accounts:
-  jugaad:
-    name: Jugaad House
+  catalog:
+    name: Ghar Finds
     handle: ""
     path: ""
-    colors: {dark: "#14213D", accent: "#FCA311", light: "#FFF6E5", text_on_accent: "#14213D"}
-  handy:
-    name: Handy House
-    handle: ""
-    path: handy/
-    colors: {dark: "#0B3C49", accent: "#FFD166", light: "#EEF7F6", text_on_accent: "#0B3C49"}
+    colors: {dark: "#1F2A44", accent: "#FF8A3D", light: "#FFF7EF", text_on_accent: "#1F2A44"}

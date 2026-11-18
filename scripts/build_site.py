@@ -112,11 +112,11 @@ def page(site: dict, account: str, prods: list[dict], img_prefix: str, preview: 
         f'<button data-c="{k}">{CATS.get(k, k.title())}</button>' for k in cats)
     cards = "".join(_card(p, f"{img_prefix}img/{p["number"]}.webp", preview) for p in prods)
     handle = acc.get("handle") or ""
-    suffix = site.get("title_suffix", "Finds")
+    suffix = site.get("title_suffix") or ""
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(name)} {suffix} · find your product number</title>
-<meta name="description" content="Useful home and kitchen finds from {html.escape(name)}. Type the number from the post.">
+<title>{html.escape(name)}{(" " + suffix) if suffix else ""} · find your product number</title>
+<meta name="description" content="Useful home and kitchen finds. Type the number from the Instagram post.">
 <meta name="robots" content="noindex">
 <style>{css}</style></head><body>
 <header><div class="brand"><h1>{html.escape(first)} <span>{html.escape(rest)}</span></h1>
@@ -127,7 +127,7 @@ def page(site: dict, account: str, prods: list[dict], img_prefix: str, preview: 
 commission at no extra cost to you. Prices and stock change on Meesho, so check there before you order.</div>
 <div class="chips">{chips}</div>
 <main>{cards}<div class="empty" id="empty" style="display:none"></div></main>
-<footer>{html.escape(name)} shows products listed on Meesho. We don't sell or ship anything ourselves;
+<footer>The product catalog for Jugaad House and Handy House on Instagram. It shows products listed on Meesho. We don't sell or ship anything ourselves;
 orders, returns and delivery are handled by Meesho and its sellers.</footer>
 <script>{JS}</script></body></html>"""
 
