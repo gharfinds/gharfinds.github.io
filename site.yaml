@@ -2,7 +2,7 @@
 # Product numbers are global: a product keeps its number on both accounts.
 title_suffix: ""
 # preview: true lists products that have no affiliate link yet (plain Meesho link). Set false at launch.
-preview: true
+preview: false
 image_base: https://images.meesho.com/images/products
 accounts:
   catalog:
