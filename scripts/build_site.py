@@ -21,8 +21,27 @@ ROOT = Path(__file__).resolve().parents[1]
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131 Safari/537.36"
 
 
+STORE_NAMES = {"shopsy": "Shopsy", "myntra": "Myntra", "meesho": "Meesho", "amazon": "Amazon",
+               "flipkart": "Flipkart", "ajio": "AJIO"}
+REFERERS = {"shopsy": "https://www.shopsy.in/", "myntra": "https://www.myntra.com/", "meesho": "https://www.meesho.com/",
+            "amazon": "https://www.amazon.in/", "flipkart": "https://www.flipkart.com/", "ajio": "https://www.ajio.com/"}
+
+
 def link_of(p: dict) -> str:
     return (p.get("aff_url") or "").strip()
+
+
+def store_of(p: dict) -> str:
+    return p.get("store") or ("meesho" if p.get("meesho_url") else "")
+
+
+def product_url(p: dict) -> str:
+    return p.get("product_url") or p.get("meesho_url") or ""
+
+
+def first_image(p: dict, base: str) -> str:
+    img = str(p["images"][0])
+    return img if img.startswith("http") else f"{base}/{p['image_folder']}/{img}_512.webp"
 
 
 CSS = """
@@ -77,7 +96,8 @@ CATS = {"kitchen": "Kitchen", "cleaning": "Cleaning", "storage": "Storage", "bat
 
 def _card(p: dict, img_rel: str, preview: bool) -> str:
     feats = "".join(f"<li>{html.escape(str(f))}</li>" for f in list(p["features"])[:3])
-    link = link_of(p) or (p["meesho_url"] if preview else "#")
+    link = link_of(p) or (product_url(p) if preview else "#")
+    store = STORE_NAMES.get(store_of(p), "the store")
     rating = ""
     if p.get("rating"):
         rating = f"{p['rating']}★"
@@ -90,7 +110,7 @@ def _card(p: dict, img_rel: str, preview: bool) -> str:
             checked = date.fromisoformat(str(checked)).strftime("%-d %b")
         except ValueError:
             pass
-        price = f"₹{p['price']} on {checked} (may change)"
+        price = f"₹{p['price']} on {store}, {checked} (may change)"
     meta = " · ".join(x for x in (rating, price) if x)
     return (f'<article class="card" id="{p["number"]}" data-c="{html.escape(p.get("category", "other"))}">'
             f'<span class="num">No. {p["number"]}</span>'
@@ -98,7 +118,7 @@ def _card(p: dict, img_rel: str, preview: bool) -> str:
             f'<div class="body"><h2>{html.escape(p["short_title"])}</h2><ul>{feats}</ul>'
             f'<div class="meta">{html.escape(meta)}</div>'
             f'<a class="buy" href="{html.escape(link)}" rel="sponsored nofollow noopener" target="_blank">'
-            f'Buy on Meesho</a></div></article>')
+            f'Buy on {store}</a></div></article>')
 
 
 def page(site: dict, account: str, prods: list[dict], img_prefix: str, preview: bool = False) -> str:
@@ -123,12 +143,12 @@ def page(site: dict, account: str, prods: list[dict], img_prefix: str, preview: 
 <small>{'@' + html.escape(handle) if handle else ''}</small></div>
 <form class="find" id="f"><input id="q" inputmode="numeric" pattern="[0-9]*" placeholder="Type product No. (e.g. 12)" aria-label="Product number">
 <button>Find</button></form></header>
-<div class="notice"><b>Ad:</b> "Buy on Meesho" links are affiliate links. If you buy, we may earn a small
-commission at no extra cost to you. Prices and stock change on Meesho, so check there before you order.</div>
+<div class="notice"><b>Ad:</b> the "Buy" links are affiliate links. If you buy, we may earn a small
+commission at no extra cost to you. Prices and stock change on the store, so check there before you order.</div>
 <div class="chips">{chips}</div>
 <main>{cards}<div class="empty" id="empty" style="display:none"></div></main>
-<footer>The product catalog for Jugaad House and Handy House on Instagram. It shows products listed on Meesho. We don't sell or ship anything ourselves;
-orders, returns and delivery are handled by Meesho and its sellers.</footer>
+<footer>The product catalog for Jugaad House and Handy House on Instagram. It shows products listed on Shopsy, Myntra and other stores. We don't sell or ship anything
+ourselves; orders, returns and delivery are handled by the store and its sellers.</footer>
 <script>{JS}</script></body></html>"""
 
 
@@ -147,11 +167,17 @@ def load_products(preview: bool) -> list[dict]:
 def thumb(p: dict, dest: Path, base: str) -> None:
     if dest.exists():
         return
-    url = f"{base}/{p['image_folder']}/{p['images'][0]}_512.webp"
+    import io
+
+    from PIL import Image
+    url = first_image(p, base)
     for attempt in range(3):
-        r = requests.get(url, headers={"User-Agent": UA, "Referer": "https://www.meesho.com/"}, timeout=30)
+        r = requests.get(url, headers={"User-Agent": UA, "Referer": REFERERS.get(store_of(p), "https://www.google.com/")},
+                         timeout=30)
         if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
-            dest.write_bytes(r.content)
+            im = Image.open(io.BytesIO(r.content)).convert("RGB")
+            im.thumbnail((512, 512))
+            im.save(dest, "WEBP", quality=82)
             return
         time.sleep(2 + 3 * attempt)
     raise SystemExit(f"thumbnail failed for No. {p['number']}: {url} (HTTP {r.status_code})")
@@ -164,9 +190,11 @@ def check(prods: list[dict]) -> list[str]:
         if n in seen:
             errs.append(f"duplicate number {n}")
         seen.add(n)
-        for k in ("number", "short_title", "meesho_url", "image_folder", "images", "features"):
+        for k in ("number", "short_title", "images", "features"):
             if not p.get(k):
                 errs.append(f"No. {n}: missing {k}")
+        if not product_url(p):
+            errs.append(f"No. {n}: missing product_url")
     return errs
 
 
