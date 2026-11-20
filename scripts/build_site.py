@@ -95,7 +95,7 @@ footer{font-size:12px;color:#666;text-align:center;padding:20px 16px 40px;line-h
 .info ul{margin:0;padding-left:19px;font-size:15px;line-height:1.5}
 .info .small{font-size:12.5px;color:#555;line-height:1.45}
 .share{display:flex;gap:8px}
-.share button{flex:1;border:1px solid #0002;background:#fff;color:var(--dark);border-radius:11px;padding:10px;font-size:14px;font-weight:700}
+.share button,.share a{flex:1;text-align:center;text-decoration:none;border:1px solid #0002;background:#fff;color:var(--dark);border-radius:11px;padding:10px;font-size:14px;font-weight:700}
 .cta{position:sticky;bottom:0;margin-top:14px;padding:12px 18px 16px;background:linear-gradient(#fff0,#fff 22%%)}
 .cta a{display:block;text-align:center;text-decoration:none;background:var(--accent);color:var(--on);font-weight:900;padding:15px;border-radius:14px;font-size:18px}
 .panel{padding-bottom:0}
@@ -121,6 +121,7 @@ function open(n,push){const p=BY[n];if(!p)return false;
   $('s-tag').textContent='No. '+n;$('s-title').textContent=p.t;
   $('s-price').innerHTML='';if(p.p){$('s-price').append('₹'+p.p+' ');const s=document.createElement('small');s.textContent='on '+p.s+(p.d?', '+p.d:'')+' (may change)';$('s-price').append(s)}
   $('s-rate').textContent=p.r||'';$('s-feat').innerHTML='';p.f.forEach(x=>{const li=document.createElement('li');li.textContent=x;$('s-feat').appendChild(li)});
+  $('wa').href='https://api.whatsapp.com/send?text='+encodeURIComponent('No. '+n+': '+p.t+(p.p?' (₹'+p.p+')':'')+' '+url(n));
   $('s-buy').href=p.l;$('s-buy').textContent='Buy on '+p.s+' →';
   $('sheet').classList.add('open');document.body.classList.add('lock');$('sheet').dataset.n=n;
   if(push)history.pushState({n},'','#'+n);return true}
@@ -144,8 +145,6 @@ $('sort').addEventListener('change',e=>sortBy(e.target.value));
 cards.forEach(c=>c.addEventListener('click',e=>{if(!e.target.closest('.buy'))open(c.id,true)}));
 $('sheet').addEventListener('click',e=>{if(e.target===$('sheet')||e.target.closest('.x'))close(true)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sheet').classList.contains('open'))close(true)});
-$('wa').addEventListener('click',()=>{const n=$('sheet').dataset.n,p=BY[n];
-  window.open('https://wa.me/?text='+encodeURIComponent(p.t+(p.p?' (₹'+p.p+')':'')+' '+url(n)),'_blank','noopener')});
 $('cp').addEventListener('click',async()=>{const n=$('sheet').dataset.n;
   try{if(navigator.share){await navigator.share({title:BY[n].t,url:url(n)})}else{await navigator.clipboard.writeText(url(n));$('cp').textContent='Copied ✓';setTimeout(()=>$('cp').textContent='Share / copy link',1500)}}catch(e){}});
 window.addEventListener('popstate',fromHash);window.addEventListener('hashchange',fromHash);
@@ -234,7 +233,7 @@ ourselves; orders, returns and delivery are handled by the store and its sellers
 <div class="gal" id="gal"></div><div class="dots" id="dots"></div>
 <div class="info"><span class="tag" id="s-tag"></span><h2 id="s-title"></h2><div class="price" id="s-price"></div>
 <div class="small" id="s-rate"></div><ul id="s-feat"></ul>
-<div class="share"><button id="wa">Send on WhatsApp</button><button id="cp">Share / copy link</button></div>
+<div class="share"><a id="wa" target="_blank" rel="noopener">Send on WhatsApp</a><button id="cp">Share / copy link</button></div>
 <div class="small"><b>Ad:</b> affiliate link. The price is what we saw on the date shown; the store's page has today's price.</div></div>
 <div class="cta"><a id="s-buy" rel="sponsored nofollow noopener" target="_blank"></a></div></div></div>
 <script type="application/json" id="data">{data}</script>
